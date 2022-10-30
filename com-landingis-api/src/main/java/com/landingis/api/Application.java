@@ -48,8 +48,6 @@ public class Application {
             List<Permission> defaultPermission = addPermission();
             Group group = initGroupDefault(defaultPermission);
 
-
-
             account = new Account();
             account.setUsername("admin");
             account.setPassword(passwordEncoder.encode("admin123654"));
