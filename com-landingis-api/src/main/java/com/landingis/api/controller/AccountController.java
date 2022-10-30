@@ -47,7 +47,7 @@ import java.util.Objects;
 @RequestMapping("/v1/account")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @Slf4j
-public class AccountController extends ABasicController{
+public class AccountController extends ABasicController {
     PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
     @Autowired
     AccountRepository accountRepository;
@@ -62,12 +62,12 @@ public class AccountController extends ABasicController{
     AccountMapper accountMapper;
 
     @GetMapping(value = "/list", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ApiMessageDto<ResponseListObj<AccountAdminDto>> getList(AccountCriteria accountCriteria, Pageable pageable){
-        if(!isAdmin()){
+    public ApiMessageDto<ResponseListObj<AccountAdminDto>> getList(AccountCriteria accountCriteria, Pageable pageable) {
+        if (!isAdmin()) {
             throw new RequestException(ErrorCode.GENERAL_ERROR_UNAUTHORIZED, "Not allow get list");
         }
         ApiMessageDto<ResponseListObj<AccountAdminDto>> apiMessageDto = new ApiMessageDto<>();
-        Page<Account> accountPage = accountRepository.findAll(accountCriteria.getSpecification(),pageable);
+        Page<Account> accountPage = accountRepository.findAll(accountCriteria.getSpecification(), pageable);
         ResponseListObj<AccountAdminDto> responseListObj = new ResponseListObj<>();
         responseListObj.setData(accountMapper.fromEntityListToDtoList(accountPage.getContent()));
         responseListObj.setPage(pageable.getPageNumber());
@@ -81,10 +81,9 @@ public class AccountController extends ABasicController{
 
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiMessageDto<LoginDto> login(@Valid @RequestBody LoginForm loginForm, BindingResult bindingResult) {
-
         ApiMessageDto<LoginDto> apiMessageDto = new ApiMessageDto<>();
         Account account = accountRepository.findAccountByUsername(loginForm.getUsername());
-        if (account == null || !passwordEncoder.matches(loginForm.getPassword(), account.getPassword()) || !Objects.equals(account.getStatus() , LandingISConstant.STATUS_ACTIVE)) {
+        if (account == null || !passwordEncoder.matches(loginForm.getPassword(), account.getPassword()) || !Objects.equals(account.getStatus(), LandingISConstant.STATUS_ACTIVE)) {
             throw new RequestException(ErrorCode.GENERAL_ERROR_LOGIN_FAILED, "Login fail, check your username or password");
         }
 
@@ -97,15 +96,13 @@ public class AccountController extends ABasicController{
         qrJwt.setKind(account.getKind().toString());
         String appendStringRole = getAppendStringRole(account);
 
-
         qrJwt.setUsername(account.getUsername());
-        qrJwt.setPemission(landingIsApiService.convertGroupToUri(account.getGroup().getPermissions())+appendStringRole);
+        qrJwt.setPemission(landingIsApiService.convertGroupToUri(account.getGroup().getPermissions()) + appendStringRole);
         qrJwt.setUserKind(account.getKind());
         qrJwt.setIsSuperAdmin(account.getIsSuperAdmin());
 
         SecurityContext securityContext = SecurityContextHolder.getContext();
         securityContext.setAuthentication(new MyAuthentication(qrJwt));
-
 
         log.info("jwt user ne: {}", qrJwt);
         String token = JWTUtils.createJWT(JWTUtils.ALGORITHMS_HMAC, "authenticationToken.getId().toString()", qrJwt, DateUtils.convertToDateViaInstant(parsedDate));
@@ -124,9 +121,9 @@ public class AccountController extends ABasicController{
         return apiMessageDto;
     }
 
-    private String getAppendStringRole (Account account) {
+    private String getAppendStringRole(Account account) {
         String appendStringRole = "";
-        if(Objects.equals(account.getKind(), LandingISConstant.USER_KIND_ADMIN)){
+        if (Objects.equals(account.getKind(), LandingISConstant.USER_KIND_ADMIN)) {
             appendStringRole = "/account/profile,/account/update_profile,/account/logout";
         } else {
             throw new RequestException(ErrorCode.GENERAL_ERROR_UNAUTHORIZED);
@@ -136,7 +133,7 @@ public class AccountController extends ABasicController{
 
     @PostMapping(value = "/create_admin", produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiMessageDto<String> createAdmin(@Valid @RequestBody CreateAccountAdminForm createAccountAdminForm, BindingResult bindingResult) {
-        if(!isAdmin()){
+        if (!isAdmin()) {
             throw new RequestException(ErrorCode.GENERAL_ERROR_UNAUTHORIZED, "Not allow create.");
         }
         ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
@@ -148,7 +145,7 @@ public class AccountController extends ABasicController{
         }
 
         Integer groupKind = LandingISConstant.GROUP_KIND_EMPLOYEE;
-        if(createAccountAdminForm.getKind().equals(LandingISConstant.USER_KIND_ADMIN)) {
+        if (createAccountAdminForm.getKind().equals(LandingISConstant.USER_KIND_ADMIN)) {
             groupKind = LandingISConstant.GROUP_KIND_SUPER_ADMIN;
         }
         Group group = groupRepository.findFirstByKind(groupKind);
@@ -169,7 +166,7 @@ public class AccountController extends ABasicController{
 
     @PutMapping(value = "/update_admin", produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiMessageDto<String> updateAdmin(@Valid @RequestBody UpdateAccountAdminForm updateAccountAdminForm, BindingResult bindingResult) {
-        if(!isAdmin()){
+        if (!isAdmin()) {
             throw new RequestException(ErrorCode.GENERAL_ERROR_UNAUTHORIZED, "Not allowed to update");
         }
 
@@ -185,7 +182,7 @@ public class AccountController extends ABasicController{
         }
         account.setFullName(updateAccountAdminForm.getFullName());
         if (StringUtils.isNoneBlank(updateAccountAdminForm.getAvatarPath())) {
-            if(!updateAccountAdminForm.getAvatarPath().equals(account.getAvatarPath())){
+            if (!updateAccountAdminForm.getAvatarPath().equals(account.getAvatarPath())) {
                 //delete old image
                 landingIsApiService.deleteFile(account.getAvatarPath());
             }
@@ -203,7 +200,7 @@ public class AccountController extends ABasicController{
     public ApiMessageDto<AccountDto> profile() {
         long id = getCurrentUserId();
         Account account = accountRepository.findById(id).orElse(null);
-        if(account == null) {
+        if (account == null) {
             throw new RequestException(ErrorCode.GENERAL_ERROR_NOT_FOUND, "Not found account");
         }
         ApiMessageDto<AccountDto> apiMessageDto = new ApiMessageDto<>();
@@ -222,7 +219,7 @@ public class AccountController extends ABasicController{
         if (account == null) {
             throw new RequestException(ErrorCode.GENERAL_ERROR_NOT_FOUND, "Not found");
         }
-        if(!passwordEncoder.matches(updateProfileAdminForm.getOldPassword(), account.getPassword())){
+        if (!passwordEncoder.matches(updateProfileAdminForm.getOldPassword(), account.getPassword())) {
             throw new RequestException(ErrorCode.GENERAL_ERROR_NOT_MATCH, "Old password not match");
         }
 
@@ -230,7 +227,7 @@ public class AccountController extends ABasicController{
             account.setPassword(passwordEncoder.encode(updateProfileAdminForm.getPassword()));
         }
         if (StringUtils.isNoneBlank(updateProfileAdminForm.getAvatar())) {
-            if(!updateProfileAdminForm.getAvatar().equals(account.getAvatarPath())){
+            if (!updateProfileAdminForm.getAvatar().equals(account.getAvatarPath())) {
                 //delete old image
                 landingIsApiService.deleteFile(account.getAvatarPath());
             }
@@ -255,7 +252,7 @@ public class AccountController extends ABasicController{
 
     @GetMapping(value = "/get/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiMessageDto<AccountAdminDto> get(@PathVariable("id") Long id) {
-        if(!isAdmin()){
+        if (!isAdmin()) {
             throw new RequestException(ErrorCode.GENERAL_ERROR_UNAUTHORIZED, "Not allowed to get.");
         }
         Account account = accountRepository.findById(id).orElse(null);
@@ -271,7 +268,7 @@ public class AccountController extends ABasicController{
 
     @DeleteMapping(value = "/delete/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiMessageDto<String> delete(@PathVariable("id") Long id) {
-        if(!isAdmin()){
+        if (!isAdmin()) {
             throw new RequestException(ErrorCode.GENERAL_ERROR_UNAUTHORIZED, "Not allow delete");
         }
         ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
@@ -286,7 +283,7 @@ public class AccountController extends ABasicController{
     }
 
     @PostMapping(value = "/request_forget_password", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ApiMessageDto<ForgetPasswordDto> requestForgetPassword(@Valid @RequestBody RequestForgetPasswordForm forgetForm, BindingResult bindingResult){
+    public ApiMessageDto<ForgetPasswordDto> requestForgetPassword(@Valid @RequestBody RequestForgetPasswordForm forgetForm, BindingResult bindingResult) {
         ApiMessageDto<ForgetPasswordDto> apiMessageDto = new ApiMessageDto<>();
         Account account = accountRepository.findAccountByEmail(forgetForm.getEmail());
         if (account == null) {
@@ -300,41 +297,41 @@ public class AccountController extends ABasicController{
         accountRepository.save(account);
 
         //send email
-        landingIsApiService.sendEmail(account.getEmail(),"OTP: "+otp, "Reset password",false);
+        landingIsApiService.sendEmail(account.getEmail(), "OTP: " + otp, "Reset password", false);
 
         ForgetPasswordDto forgetPasswordDto = new ForgetPasswordDto();
-        String hash = AESUtils.encrypt (account.getId()+";"+otp, true);
+        String hash = AESUtils.encrypt(account.getId() + ";" + otp, true);
         forgetPasswordDto.setIdHash(hash);
 
         apiMessageDto.setResult(true);
         apiMessageDto.setData(forgetPasswordDto);
         apiMessageDto.setMessage("Request forget password success, please check email.");
-        return  apiMessageDto;
+        return apiMessageDto;
     }
 
     @PostMapping(value = "/forget_password", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ApiMessageDto<Long> forgetPassword(@Valid @RequestBody ForgetPasswordForm forgetForm, BindingResult bindingResult){
+    public ApiMessageDto<Long> forgetPassword(@Valid @RequestBody ForgetPasswordForm forgetForm, BindingResult bindingResult) {
         ApiMessageDto<Long> apiMessageDto = new ApiMessageDto<>();
 
-        String[] hash = AESUtils.decrypt(forgetForm.getIdHash(),true).split(";",2);
+        String[] hash = AESUtils.decrypt(forgetForm.getIdHash(), true).split(";", 2);
         Long id = ConvertUtils.convertStringToLong(hash[0]);
-        if(Objects.equals(id,0)){
+        if (Objects.equals(id, 0)) {
             throw new RequestException(ErrorCode.GENERAL_ERROR_WRONG_HASH, "Wrong hash");
         }
 
         Account account = accountRepository.findById(id).orElse(null);
-        if (account == null ) {
+        if (account == null) {
             throw new RequestException(ErrorCode.GENERAL_ERROR_NOT_FOUND, "account not found.");
         }
 
-        if(account.getAttemptCode() >= LandingISConstant.MAX_ATTEMPT_FORGET_PWD){
+        if (account.getAttemptCode() >= LandingISConstant.MAX_ATTEMPT_FORGET_PWD) {
             throw new RequestException(ErrorCode.GENERAL_ERROR_LOCKED, "Account locked");
         }
 
-        if(!account.getResetPwdCode().equals(forgetForm.getOtp()) ||
-                (new Date().getTime() - account.getResetPwdTime().getTime() >= LandingISConstant.MAX_TIME_FORGET_PWD)){
+        if (!account.getResetPwdCode().equals(forgetForm.getOtp()) ||
+                (new Date().getTime() - account.getResetPwdTime().getTime() >= LandingISConstant.MAX_TIME_FORGET_PWD)) {
             //tang so lan
-            account.setAttemptCode(account.getAttemptCode()+1);
+            account.setAttemptCode(account.getAttemptCode() + 1);
             accountRepository.save(account);
 
             throw new RequestException(ErrorCode.GENERAL_ERROR_INVALID, "Code invalid");
@@ -348,20 +345,20 @@ public class AccountController extends ABasicController{
 
         apiMessageDto.setResult(true);
         apiMessageDto.setMessage("Change password success.");
-        return  apiMessageDto;
+        return apiMessageDto;
     }
 
     @PostMapping(value = "/verify_account", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ApiMessageDto<String> verify(@RequestBody @Valid VerifyForm verifyForm, BindingResult bindingResult){
+    public ApiMessageDto<String> verify(@RequestBody @Valid VerifyForm verifyForm, BindingResult bindingResult) {
         ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
 
         Account account = accountRepository.findById(verifyForm.getId()).orElse(null);
-        if (account == null ) {
+        if (account == null) {
             throw new RequestException(ErrorCode.GENERAL_ERROR_NOT_FOUND, "Account is not found");
         }
 
-        if(!account.getVerifyCode().equals(verifyForm.getOtp()) ||
-           (new Date().getTime() - account.getVerifyTime().getTime() >= LandingISConstant.MAX_TIME_VERIFY_ACCOUNT)){
+        if (!account.getVerifyCode().equals(verifyForm.getOtp()) ||
+                (new Date().getTime() - account.getVerifyTime().getTime() >= LandingISConstant.MAX_TIME_VERIFY_ACCOUNT)) {
 
             throw new RequestException(ErrorCode.GENERAL_ERROR_NOT_MATCH, "Otp not match");
         }

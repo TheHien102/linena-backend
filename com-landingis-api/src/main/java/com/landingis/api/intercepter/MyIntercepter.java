@@ -7,6 +7,7 @@ package com.landingis.api.intercepter;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.landingis.api.constant.LandingISConstant;
 import com.landingis.api.dto.ApiMessageDto;
 import com.landingis.api.jwt.JWTUtils;
 import com.landingis.api.jwt.UserJwt;
@@ -21,7 +22,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
-
+import java.util.Objects;
 
 
 @Slf4j
@@ -75,6 +76,11 @@ public class MyIntercepter implements HandlerInterceptor {
 
         //check permission here
         String requestUri = request.getRequestURI();
+
+        if(requestUri.contains("list")){
+            return Objects.equals(qrJwt.getKind(), String.valueOf(LandingISConstant.USER_KIND_ADMIN));
+        }
+
         String[] uriByPassAuth = qrJwt.getPemission().split(",");
 
         return Arrays.stream(uriByPassAuth).anyMatch(requestUri::contains);
