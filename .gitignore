@@ -1,0 +1,5 @@
+.idea/
+/com-services-api/target/
+*.iml
+# Project exclude paths
+/com-landingis-api/target/
