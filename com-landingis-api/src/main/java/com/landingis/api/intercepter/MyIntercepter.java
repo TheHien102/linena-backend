@@ -72,14 +72,18 @@ public class MyIntercepter implements HandlerInterceptor {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         securityContext.setAuthentication(new MyAuthentication(qrJwt));
 
-//        log.info("jwt user verify ne: {}", qrJwt);
-//
-//        //check permission here
-//        String requestUri = request.getRequestURI();
-//        String[] uriByPassAuth = qrJwt.getPemission().split(",");
-//
-//        return Arrays.stream(uriByPassAuth).anyMatch(requestUri::contains);
-        return Objects.equals(qrJwt.getKind(), String.valueOf(LandingISConstant.USER_KIND_ADMIN));
+        log.info("jwt user verify ne: {}", qrJwt);
+
+        //check permission here
+        String requestUri = request.getRequestURI();
+
+        if(requestUri.contains("list")){
+            return Objects.equals(qrJwt.getKind(), String.valueOf(LandingISConstant.USER_KIND_ADMIN));
+        }
+
+        String[] uriByPassAuth = qrJwt.getPemission().split(",");
+
+        return Arrays.stream(uriByPassAuth).anyMatch(requestUri::contains);
     }
     /**
      * get full url request
