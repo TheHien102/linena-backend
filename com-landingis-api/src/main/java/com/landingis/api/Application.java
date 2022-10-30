@@ -106,7 +106,6 @@ public class Application {
         superAdminGroup.setId(1L);
         superAdminGroup.setPermissions(defaultPermission);
         return groupRepository.save(superAdminGroup);
-
     }
 
     @PostConstruct
